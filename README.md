@@ -21,7 +21,7 @@ Press **Enter** to start. Default keyboard controls:
 | Late cancel / fake recovery / stance swap | Q / E / R |
 | Pause | Escape |
 
-Controls can be rebound in-game. The game simulation runs in the browser; control bindings are saved in browser local storage. Google Fonts are requested for typography, with system-font fallbacks.
+Controls can be rebound in-game. The game simulation runs in the browser; control bindings are saved in browser local storage. Matches are not saved, and starting a new match resets its round, statistics, and learned model. Google Fonts are requested for typography, with system-font fallbacks.
 
 ## Build
 

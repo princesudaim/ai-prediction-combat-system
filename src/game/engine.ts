@@ -102,6 +102,47 @@ export interface Snapshot {
 
 const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
 
+const createPlayer = () => ({
+  x: 300,
+  hp: 100,
+  facing: 1 as 1 | -1,
+  state: 'idle' as PState,
+  timer: 0,
+  atk: null as AttackId | null,
+  unreadable: 0,
+  stance: 'orbit' as Stance,
+  guardHold: false,
+  feignArmed: false,
+  feignFlash: 0,
+  whiffed: false,
+  dashInvuln: 0,
+  dashDir: 1,
+  hitFlash: 0,
+  entropy: 45,
+  idleT: 0,
+  startupDur: 0,
+  activeDur: 0,
+  recoveryDur: 0,
+  bonusDmg: 1,
+  trail: [] as { x: number; a: number }[],
+});
+
+const createAi = () => ({
+  x: 660,
+  hp: 100,
+  facing: -1 as 1 | -1,
+  state: 'idle' as AState,
+  timer: 0,
+  atk: null as AiAttack | null,
+  label: '',
+  phase: 'windup' as 'windup' | 'active' | 'recovery',
+  hopVx: 0,
+  after: null as string | null,
+  attackTimer: 1.6,
+  spacing: 168,
+  trail: [] as { x: number; a: number }[],
+});
+
 export class Engine {
   clock = 0;
   roundTime = 60;
@@ -123,46 +164,8 @@ export class Engine {
   launchLead = 0.16;
   predRefresh = 0;
 
-  player = {
-    x: 300,
-    hp: 100,
-    facing: 1 as 1 | -1,
-    state: 'idle' as PState,
-    timer: 0,
-    atk: null as AttackId | null,
-    unreadable: 0,
-    stance: 'orbit' as Stance,
-    guardHold: false,
-    feignArmed: false,
-    feignFlash: 0,
-    whiffed: false,
-    dashInvuln: 0,
-    dashDir: 1,
-    hitFlash: 0,
-    entropy: 45,
-    idleT: 0,
-    startupDur: 0,
-    activeDur: 0,
-    recoveryDur: 0,
-    bonusDmg: 1,
-    trail: [] as { x: number; a: number }[],
-  };
-
-  ai = {
-    x: 660,
-    hp: 100,
-    facing: -1 as 1 | -1,
-    state: 'idle' as AState,
-    timer: 0,
-    atk: null as AiAttack | null,
-    label: '',
-    phase: 'windup' as 'windup' | 'active' | 'recovery',
-    hopVx: 0,
-    after: null as string | null,
-    attackTimer: 1.6,
-    spacing: 168,
-    trail: [] as { x: number; a: number }[],
-  };
+  player = createPlayer();
+  ai = createAi();
 
   input = { left: false, right: false, guard: false };
 
@@ -180,13 +183,36 @@ export class Engine {
 
   // ── lifecycle ────────────────────────────────────────────────────────────
   newMatch() {
+    this.clock = 0;
+    this.roundTime = 60;
+    this.phase = 'fight';
+    this.phaseTimer = 0;
+    this.roundResult = null;
     this.predictor.fullReset();
+    this.confidence = 0.2;
+    this.horizon = 1;
+    this.chain = [];
+    this.plan = null;
+    this.planCooldown = 0;
+    this.commitThreshold = 0.42;
+    this.predRefresh = 0;
     this.round = 1;
     this.wins = 0;
     this.losses = 0;
     this.matchResult = null;
+    this.player = createPlayer();
+    this.ai = createAi();
+    this.input = { left: false, right: false, guard: false };
+    this.shake = 0;
+    this.freeze = 0;
+    this.flash = 0;
+    this.flashColor = '#fff';
+    this.uid = 1;
     this.stats = { reads: 0, breaks: 0, baits: 0, damage: 0, combo: 0, bestCombo: 0, comboT: 0 };
     this.log = [];
+    this.particles = [];
+    this.floats = [];
+    this.callouts = [];
     this.pushLog('ORACLE ONLINE — pattern buffer empty', 'info');
     this.startRound();
   }
